@@ -1,13 +1,21 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * O método main é responsável por fazer a requisição a API do The Movie DB
@@ -19,31 +27,99 @@ import java.util.Map;
  * @throws IOException Exceção lançada quando ocorre um erro de I/O
  * @throws InterruptedException Exceção lançada quando a thread é interrompida
  */
-
 public class Main {
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
-        Map<String, String> env = loadEnv(".env");
+        Map<String, String> env = loadEnv(".env"); //Carrega as variáveis de ambiente
         String key = env.get("API_KEY");
 
-        if (key == null) {
+        if (key == null) { //Verifica se a chave da API foi encontrada no arquivo .env.
+            // Caso não tenha uma chave válida, o programa é encerrado.
             System.out.println("API_KEY não encontrada");
             return;
         }
-
 
         String search = "top_rated";
         int pagina = 1;
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI("https://api.themoviedb.org/3/movie/" + search + "?api_key=" + key + "&language=pt-BR&page=" + pagina)) //https://api.themoviedb.org/3/movie/top_rated?api_key=8e479da2b3a497455374bff051aab732&language=pt-BR&page=1
+                .uri(new URI("https://api.themoviedb.org/3/movie/" + search + "?api_key=" + key + "&language=pt-BR&page=" + pagina))
                 .GET()
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         String json = response.body();
+        String[] moviesArray = parseJsonMovies(json);
+
+        List<String> titles = parseTitles(moviesArray);
+        titles.forEach(System.out::println);
+
+        List<String> urlImages = parseUrlImages(moviesArray);
+        urlImages.forEach(System.out::println);
+
+        List<Integer> years = parseYears(moviesArray);
+        years.forEach(System.out::println);
+
+        List<Double> ratings = parseRatings(moviesArray);
+        ratings.forEach(System.out::println);
 
         System.out.println(json);
+    }
+
+    private static String[] parseJsonMovies(String json) {
+        Matcher matcher = Pattern.compile(".*\\[(.*)\\].*").matcher(json);
+
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("no match in " + json);
+        }
+
+        String[] moviesArray = matcher.group(1).split("\\},\\{");
+        moviesArray[0] = moviesArray[0].substring(1);
+        int last = moviesArray.length - 1;
+        String lastString = moviesArray[last];
+        moviesArray[last] = lastString.substring(0, lastString.length() - 1);
+        return moviesArray;
+    }
+
+    private static List<String> parseTitles(String[] moviesArray) {
+        return parseAttribute(moviesArray, "title");
+    }
+
+    private static List<String> parseUrlImages(String[] moviesArray) {
+        return parseAttribute(moviesArray, "poster_path");
+    }
+
+    private static List<Integer> parseYears(String[] moviesArray) {
+        return parseAttribute(moviesArray, "release_date").stream()
+                .map(date -> Integer.parseInt(date.split("-")[0]))
+                .collect(Collectors.toList());
+    }
+
+    private static List<Double> parseRatings(String[] moviesArray) {
+    return parseAttribute(moviesArray, "vote_average", false).stream()
+            .map(Double::parseDouble)
+            .map(value -> BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue())
+            .collect(Collectors.toList());
+}
+
+    private static List<String> parseAttribute(String[] moviesArray, String attribute) {
+        return parseAttribute(moviesArray, attribute, true);
+    }
+
+    private static List<String> parseAttribute(String[] moviesArray, String attribute, boolean isString) {
+        List<String> attributes = new ArrayList<>();
+        String regex = isString ? "\"" + attribute + "\":\"(.*?)\"" : "\"" + attribute + "\":(\\d+\\.\\d+|\\d+)";
+        Pattern pattern = Pattern.compile(regex);
+
+        for (String movieJson : moviesArray) {
+            Matcher matcher = pattern.matcher(movieJson);
+            if (matcher.find()) {
+                attributes.add(matcher.group(1));
+            } else {
+                attributes.add(""); // Add empty string if attribute is not found
+            }
+        }
+        return attributes;
     }
 
     /**
@@ -54,17 +130,17 @@ public class Main {
      */
     private static Map<String, String> loadEnv(String filePath) {
         Map<String, String> env = new HashMap<>();
-        try (BufferedReader bf = new BufferedReader(new FileReader(filePath))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
-            while ((line = bf.readLine()) != null) {
-                String[] parts = line.split("=");
-                env.put(parts[0], parts[1]);
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    env.put(parts[0].trim(), parts[1].trim());
+                }
             }
-            return env;
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
         }
+        return env;
     }
-
 }
