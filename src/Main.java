@@ -49,16 +49,9 @@ public static void main() throws URISyntaxException, IOException, InterruptedExc
 
     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
     String json = response.body(); // JSON retornado pela API
-    String[] moviesArray = parseJsonMovies(json); // Divide o JSON em objetos JSON individuais
 
-    List<String> titles = parseTitles(moviesArray);
-    titles.forEach(System.out::println);
-    List<String> urlImages = parseUrlImages(moviesArray);
-    urlImages.forEach(System.out::println);
-    List<Integer> years = parseYears(moviesArray);
-    years.forEach(System.out::println);
-    List<Double> ratings = parseRatings(moviesArray);
-    ratings.forEach(System.out::println);
+    List<Movie> movies = parseMovies(json);// Faz o parse do JSON e retorna uma lista de filmes
+    movies.forEach(System.out::println); // Imprime os filmes no console
 }
 
 /**
@@ -82,50 +75,37 @@ private static String[] parseJsonMovies(String json) {
 }
 
 /**
- * Analisa o array de filmes e retorna uma lista com os títulos dos filmes.
- *
- * @param moviesArray Array de filmes
- * @return Lista com os títulos dos filmes
+ * Método que faz o parse dos atributos dos filmes.
+ * Ele extrai os atributos dos filmes, como título, imagem, ano e avaliação.
+ * @param json JSON retornado pela API
+ * @return Lista de filmes
  */
-private static List<String> parseTitles(String[] moviesArray) {
-    return parseAttribute(moviesArray, "title");
-}
+private static List<Movie> parseMovies(String json) {
+    String[] moviesArray = parseJsonMovies(json); // Divide o array de filmes
 
-/**
- * Analisa o array de filmes e retorna uma lista com as URLs das imagens dos filmes.
- *
- * @param moviesArray Array de filmes
- * @return Lista com as URLs das imagens dos filmes
- */
-private static List<String> parseUrlImages(String[] moviesArray) {
-    return parseAttribute(moviesArray, "poster_path");
-}
-
-/**
- * Analisa o array de filmes e retorna uma lista com os anos de lançamento dos filmes.
- *
- * @param moviesArray Array de filmes
- * @return Lista com os anos de lançamento dos filmes
- */
-private static List<Integer> parseYears(String[] moviesArray) {
-    return parseAttribute(moviesArray, "release_date").stream()
-            .filter(date -> !date.isEmpty()) // Filtra datas vazias
-            .map(date -> Integer.parseInt(date.split("-")[0]))
-            .collect(Collectors.toList());
-}
-
-/**
- * Analisa o array de filmes e retorna uma lista com as avaliações dos filmes.
- *
- * @param moviesArray Array de filmes
- * @return Lista com as avaliações dos filmes
- */
-private static List<Double> parseRatings(String[] moviesArray) {
-    return parseAttribute(moviesArray, "vote_average", false).stream()
-            .filter(value -> !value.isEmpty()) // Filtra valores vazios
+    // Analisa e extrai os atributos dos filmes utilizando a classe parseAttribute
+    List<String> titles = parseAttribute(moviesArray, "title");
+    List<String> urlImages = parseAttribute(moviesArray, "poster_path");
+    List<Double> ratings = parseAttribute(moviesArray, "vote_average", false).stream()
             .map(Double::parseDouble)
             .map(value -> BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue())
             .collect(Collectors.toList());
+    List<Integer> years = parseAttribute(moviesArray, "release_date").stream()
+            .filter(date -> !date.isEmpty())
+            .map(date -> Integer.parseInt(date.split("-")[0]))
+            .collect(Collectors.toList());
+
+    // Cria lista de filmes combinando os atributos
+    List<Movie> movies = new ArrayList<>();
+    for (int i = 0; i < moviesArray.length; i++) {
+        String title = i < titles.size() ? titles.get(i) : "";
+        String urlImage = i < urlImages.size() ? urlImages.get(i) : "";
+        double rating = i < ratings.size() ? ratings.get(i) : 0.0;
+        int year = i < years.size() ? years.get(i) : 0;
+
+        movies.add(new Movie(title, urlImage, year, rating)); // Adiciona filme à lista
+    }
+    return movies; // Retorna a lista de filmes
 }
 
 private static List<String> parseAttribute(String[] moviesArray, String attribute) {
@@ -173,7 +153,14 @@ private static Map<String, String> loadEnv() {
         }
     } catch (IOException e) {
         Logger logger = Logger.getLogger(com.sun.tools.javac.Main.class.getName()); // Cria um logger
-        logger.log(Level.SEVERE, "Erro ao carregar variáveis de ambiente", e); // Registra o erro
+        logger.log(Level.SEVERE, "Erro ao carregar variáveis de ambiente", e); // Registro de erro
     }
     return env;
+}
+
+public record Movie(String title, String urlImage, int year, double rating) {
+    @Override
+    public String toString() {
+        return title + " (" + year + ") - " + rating + "/10";
+    }
 }
