@@ -89,11 +89,11 @@ private static List<Movie> parseMovies(String json) {
     List<Double> ratings = parseAttribute(moviesArray, "vote_average", false).stream()
             .map(Double::parseDouble)
             .map(value -> BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue())
-            .collect(Collectors.toList());
+            .toList();
     List<Integer> years = parseAttribute(moviesArray, "release_date").stream()
             .filter(date -> !date.isEmpty())
             .map(date -> Integer.parseInt(date.split("-")[0]))
-            .collect(Collectors.toList());
+            .toList();
 
     // Cria lista de filmes combinando os atributos
     List<Movie> movies = new ArrayList<>();
