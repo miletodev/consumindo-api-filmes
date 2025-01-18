@@ -92,6 +92,44 @@ A imutabilidade do objeto Movie é essencial pelos seguintes motivos:
 
 Em resumo: O uso de record garante a imutabilidade do objeto Movie, o que traz diversos benefícios em termos de segurança, manutenibilidade e alinhamento com boas práticas de programação. A imutabilidade dispensa a necessidade de setters e, dada a simplicidade da entidade, o uso de interfaces não se justifica.
 
+## Estrutura Final do Projeto
+
+O projeto é estruturado para garantir clareza, manutenibilidade e integração eficiente com a API do The Movie DB. Abaixo está uma visão geral dos principais componentes e a justificativa por trás de seu design:
+
+### 1. `TmdbApiClient`
+
+- **Propósito**: Lida com as requisições à API do The Movie DB e processa as respostas.
+- **Principais Funcionalidades**:
+  - Utiliza `HttpClient` para fazer requisições HTTP.
+  - Faz o parse das respostas JSON usando `TmdbMovieJsonParser`.
+  - Filtra e ordena os filmes com base em critérios específicos.
+  - Limita o número de filmes a 250 para garantir desempenho.
+
+### 2. `TmdbMovieJsonParser`
+
+- **Propósito**: Faz o parse das respostas JSON da API do The Movie DB.
+- **Principais Funcionalidades**:
+  - Implementa a interface `JsonParser`.
+  - Extrai atributos dos filmes como título, caminho do poster, nota e data de lançamento.
+  - Lida com possíveis erros de parsing de forma graciosa.
+
+### 3. `Movie`
+
+- **Propósito**: Representa uma entidade de filme com atributos como título, URL da imagem, nota e ano de lançamento.
+- **Principais Funcionalidades**:
+  - Definido como um `record` para garantir imutabilidade.
+  - Implementa a interface `Content` para consistência com outros tipos de conteúdo.
+  - Fornece métodos de acesso para cada atributo.
+
+### Justificativa para as Escolhas de Design
+
+- **Imutabilidade**: A classe `Movie` é projetada como um `record` para garantir que os dados do filme permaneçam inalterados após a criação. Isso previne modificações acidentais e alinha-se com as melhores práticas para lidar com entidades de domínio.
+- **Separação de Responsabilidades**: O projeto separa as responsabilidades de comunicação com a API (`TmdbApiClient`) e parsing de JSON (`TmdbMovieJsonParser`). Essa abordagem modular melhora a manutenibilidade e testabilidade.
+- **Tratamento de Erros**: O parser inclui tratamento de erros para gerenciar possíveis problemas com a estrutura do JSON, garantindo robustez.
+- **Desempenho**: O cliente limita o número de filmes a 250 e filtra duplicatas, otimizando o desempenho e a relevância dos dados.
+
+Essa estrutura garante que o projeto seja fácil de entender, manter e estender, enquanto adere às práticas modernas de desenvolvimento em Java.
+
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
