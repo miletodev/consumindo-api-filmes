@@ -125,12 +125,8 @@ private static List<String> parseAttribute(String[] moviesArray, String attribut
     Pattern pattern = Pattern.compile(regex);
 
     for (String movieJson : moviesArray) {
-        Matcher matcher = pattern.matcher(movieJson); // Procura o atributo no JSON
-        if (matcher.find()) {
-            attributes.add(matcher.group(1));
-        } else {
-            attributes.add(""); // Adiciona string vazia caso o atributo não seja encontrado
-        }
+        Matcher matcher = pattern.matcher(movieJson);
+        attributes.add(matcher.find() ? matcher.group(1) : "");
     }
     return attributes;
 }
