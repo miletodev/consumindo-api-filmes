@@ -48,8 +48,8 @@ public static void main() throws URISyntaxException, IOException, InterruptedExc
             .build();
 
     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-    String json = response.body();
-    String[] moviesArray = parseJsonMovies(json);
+    String json = response.body(); // JSON retornado pela API
+    String[] moviesArray = parseJsonMovies(json); // Divide o JSON em objetos JSON individuais
 
     List<String> titles = parseTitles(moviesArray);
     titles.forEach(System.out::println);
@@ -61,54 +61,91 @@ public static void main() throws URISyntaxException, IOException, InterruptedExc
     ratings.forEach(System.out::println);
 }
 
+/**
+ * Método que faz o parse do JSON retornado pela API do The Movie DB.
+ * Ele captura o campo "results" do JSON e divide os objetos JSON dentro do array.
+ * @param json JSON retornado pela API
+ * @return Array de strings com os objetos JSON
+ */
 private static String[] parseJsonMovies(String json) {
     // Atualiza regex para capturar "results" corretamente, permitindo múltiplas linhas
     Matcher matcher = Pattern.compile("\"results\":\\[(.*)]", Pattern.DOTALL).matcher(json);
 
-    if (!matcher.find()) {
+    if (!matcher.find()) { // Verifica se o campo "results" foi encontrado no JSON retornado
         System.out.println("Erro: Não foi possível encontrar o campo 'results' no JSON.");
         throw new IllegalArgumentException("Campo 'results' não encontrado no JSON.");
     }
 
-    String moviesJsonArray = matcher.group(1).trim();
+    String moviesJsonArray = matcher.group(1).trim(); // Captura o campo "results" do JSON
     // Divide objetos JSON dentro do array, usando delimitadores precisos
-    return moviesJsonArray.split("(?<=}),\\s*(?=\\{)");
+    return moviesJsonArray.split("(?<=}),\\s*(?=\\{)"); // Divide o array de filmes
 }
 
+/**
+ * Analisa o array de filmes e retorna uma lista com os títulos dos filmes.
+ *
+ * @param moviesArray Array de filmes
+ * @return Lista com os títulos dos filmes
+ */
 private static List<String> parseTitles(String[] moviesArray) {
     return parseAttribute(moviesArray, "title");
 }
 
+/**
+ * Analisa o array de filmes e retorna uma lista com as URLs das imagens dos filmes.
+ *
+ * @param moviesArray Array de filmes
+ * @return Lista com as URLs das imagens dos filmes
+ */
 private static List<String> parseUrlImages(String[] moviesArray) {
     return parseAttribute(moviesArray, "poster_path");
 }
 
+/**
+ * Analisa o array de filmes e retorna uma lista com os anos de lançamento dos filmes.
+ *
+ * @param moviesArray Array de filmes
+ * @return Lista com os anos de lançamento dos filmes
+ */
 private static List<Integer> parseYears(String[] moviesArray) {
     return parseAttribute(moviesArray, "release_date").stream()
-            .filter(date -> !date.isEmpty())
+            .filter(date -> !date.isEmpty()) // Filtra datas vazias
             .map(date -> Integer.parseInt(date.split("-")[0]))
             .collect(Collectors.toList());
 }
 
+/**
+ * Analisa o array de filmes e retorna uma lista com as avaliações dos filmes.
+ *
+ * @param moviesArray Array de filmes
+ * @return Lista com as avaliações dos filmes
+ */
 private static List<Double> parseRatings(String[] moviesArray) {
     return parseAttribute(moviesArray, "vote_average", false).stream()
-            .filter(value -> !value.isEmpty())
+            .filter(value -> !value.isEmpty()) // Filtra valores vazios
             .map(Double::parseDouble)
             .map(value -> BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue())
             .collect(Collectors.toList());
 }
 
 private static List<String> parseAttribute(String[] moviesArray, String attribute) {
-    return parseAttribute(moviesArray, attribute, true);
+    return parseAttribute(moviesArray, attribute, true); // Chama o método sobrecarregado
 }
 
+/**
+ * Analisa o array de filmes e extrai um atributo específico.
+ *
+ * @param moviesArray O array de filmes em formato JSON
+ * @param attribute O nome do atributo a ser extraído
+ * @return Uma lista de valores do atributo extraído
+ */
 private static List<String> parseAttribute(String[] moviesArray, String attribute, boolean isString) {
     List<String> attributes = new ArrayList<>();
     String regex = isString ? "\"" + attribute + "\":\"(.*?)\"" : "\"" + attribute + "\":(\\d+\\.\\d+|\\d+)";
     Pattern pattern = Pattern.compile(regex);
 
     for (String movieJson : moviesArray) {
-        Matcher matcher = pattern.matcher(movieJson);
+        Matcher matcher = pattern.matcher(movieJson); // Procura o atributo no JSON
         if (matcher.find()) {
             attributes.add(matcher.group(1));
         } else {
@@ -135,8 +172,8 @@ private static Map<String, String> loadEnv() {
             }
         }
     } catch (IOException e) {
-        Logger logger = Logger.getLogger(com.sun.tools.javac.Main.class.getName());
-        logger.log(Level.SEVERE, "Erro ao carregar variáveis de ambiente", e);
+        Logger logger = Logger.getLogger(com.sun.tools.javac.Main.class.getName()); // Cria um logger
+        logger.log(Level.SEVERE, "Erro ao carregar variáveis de ambiente", e); // Registra o erro
     }
     return env;
 }
