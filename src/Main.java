@@ -28,7 +28,7 @@ public class Main {
             return;
         }
 
-        ImdbApiClient apiClient = new ImdbApiClient(key); // Cria uma instância da classe ImdbApiClient
+        TmdbApiClient apiClient = new TmdbApiClient(key); // Cria uma instância da classe ImdbApiClient
         List<Movie> allMovies = apiClient.fetchMovies("popular", 496); // Busca os filmes populares
 
         allMovies = allMovies.stream()

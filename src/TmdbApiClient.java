@@ -10,12 +10,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class TmdbApiClient implements JsonParser {
-    @Override
-    public List<? extends Content> parse() {
-        return List.of();
-    }
-
+public class TmdbApiClient {
     private final String apiKey;
     private final HttpClient client = HttpClient.newHttpClient();
 
@@ -34,7 +29,12 @@ public class TmdbApiClient implements JsonParser {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String json = response.body();
 
-            List<Movie> movies = parseMovies(json);
+//            System.out.println("API Response: " + json); // Debug statement
+
+            TmdbMovieJsonParser parser = new TmdbMovieJsonParser(json);
+            List<Movie> movies = parser.parse();
+//            System.out.println("Parsed Movies: " + movies); // Debug statement
+
             allMovies.addAll(movies);
 
             // Filtra filmes duplicados e mantém apenas o mais antigo
@@ -43,7 +43,7 @@ public class TmdbApiClient implements JsonParser {
                     .collect(Collectors.toMap(
                             Movie::title,
                             Function.identity(),
-                            (movie1, movie2) -> Integer.parseInt(movie1.year()) < Integer.parseInt(movie2.year()) ? movie1 : movie2
+                            (movie1, movie2) -> movie1.year() < movie2.year() ? movie1 : movie2
                     ))
                     .values());
 
@@ -51,15 +51,14 @@ public class TmdbApiClient implements JsonParser {
                 break;
             }
         }
-        return allMovies.stream()
-                .sorted(Comparator.comparingDouble(movie -> movie.rating()).reversed())
+
+        List<Movie> sortedMovies = allMovies.stream()
+                .sorted(Comparator.comparingDouble(Movie::rating).reversed())
                 .limit(250)
                 .collect(Collectors.toList());
-    }
 
-    private List<Movie> parseMovies(String json) {
-        // Implementation of parseMovies method
-        // This should parse the JSON and return a list of Movie objects
-        return new ArrayList<>();
+//        System.out.println("Sorted Movies: " + sortedMovies); // Debug statement
+
+        return sortedMovies;
     }
 }
