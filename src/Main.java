@@ -49,8 +49,20 @@ public static void main() throws URISyntaxException, IOException, InterruptedExc
     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
     String json = response.body(); // JSON retornado pela API
 
-    List<Movie> movies = parseMovies(json);// Faz o parse do JSON e retorna uma lista de filmes
-    movies.forEach(System.out::println); // Imprime os filmes no console
+        List<Movie> movies = parseMovies(json);// Faz o parse do JSON e retorna uma lista de filmes
+        allMovies.addAll(movies); // Adiciona os filmes à lista de filmes
+
+        if (allMovies.size() >= 250) { // Verifica se já foram obtidos 250 filmes
+            break; // Encerra o loop
+        }
+    }
+
+    allMovies = allMovies.stream()
+                    .sorted(Comparator.comparingDouble(Movie::rating).reversed()) // Ordena os filmes por avaliação
+                    .limit(250)
+                            .collect(Collectors.toList()); // Limita a lista a 250 filmes
+
+    HtmlGenerator.generateHtml(allMovies, "filmes.html"); // Gera um arquivo HTML com a lista de filmes
 }
 
 /**
