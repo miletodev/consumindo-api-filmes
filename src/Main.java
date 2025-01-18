@@ -170,63 +170,60 @@ private static Map<String, String> loadEnv() {
 /**
  * Classe que representa um filme. Ela é usada para armazenar os atributos de um filme.
  * A classe é imutável e possui um método toString que retorna uma representação textual do filme.
- * Também possui um método getFullImageUrl que retorna a URL completa da imagem do filme.
- *
  * @param title Título do filme
  * @param urlImage URL da imagem do filme
  * @param year Ano de lançamento do filme
  * @param rating Avaliação do filme
- * @return Filme
  */
 public record Movie(String title, String urlImage, int year, double rating) {
-    public String getFullImageUrl() {
-        return "https://image.tmdb.org/t/p/w500" + urlImage;
-    }
-
     @Override
-    public String toString() {
-        return title + " (" + year + ") - " + rating + "/10";
+    public String toString() { // Retorna uma representação textual do filme
+        return title + " (" + year + ") - " + rating + "/10"; // Formato: "Título (Ano) - Avaliação/10"
     }
 }
 
 public class HtmlGenerator {
     public static void generateHtml(List<Movie> movies, String filePath) {
-        String head = """
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
-                integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-        </head>
-        """;
+        String head =
+                """
+                <head>
+                    <meta charset=\"utf-8\">
+                    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">
+                    <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css\" 
+                        + "integrity=\"sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm\" crossorigin=\"anonymous\">					
+                </head>
+                """; // Cabeçalho do HTML
 
-        String divTemplate = """
-        <div class="col-md-4 d-flex align-items-stretch mb-3">
-            <div class="card text-white bg-dark">
-                <h4 class="card-header">%s</h4>
-                <div class="card-body">
-                    <img class="card-img" src="%s" alt="%s">
-                    <p class="card-text mt-2">Nota: %s - Ano: %s</p>
+        String divTemplate =
+                """
+                <div class=\"card text-white bg-dark mb-3\" style=\"max-width: 18rem;\">
+                    <h4 class=\"card-header\">%s</h4>
+                    <div class=\"card-body\">
+                        <img class=\"card-img\" src=\"%s\" alt=\"%s\">
+                        <p class=\"card-text mt-2\">Nota: %s - Ano: %s</p>
+                    </div>
                 </div>
-            </div>
-        </div>
-        """;
+                """;
 
-        try (PrintWriter writer = new PrintWriter(filePath, "UTF-8")) {
+        try (PrintWriter writer = new PrintWriter(filePath)) {
             writer.println("<!DOCTYPE html>");
             writer.println("<html>");
             writer.println(head);
+            writer.println("<title>Filmes</title>");
+            writer.println("</head>");
             writer.println("<body>");
-            writer.println("<div class=\"container\">");
             writer.println("<h1>Filmes</h1>");
-            writer.println("<div class=\"row justify-content-center\">");
+            writer.println("<ul>");
 
             for (Movie movie : movies) {
-                writer.println(String.format(divTemplate, movie.title(), movie.getFullImageUrl(), movie.title(), movie.rating(), movie.year()));
+                writer.println("<li>");
+                writer.println("<h2>" + movie.title() + " (" + movie.year() + ")</h2>");
+                writer.println("<img src='https://image.tmdb.org/t/p/w500" + movie.urlImage() + "' alt='Poster'>");
+                writer.println("<p>Avaliação: " + movie.rating() + "/10</p>");
+                writer.println("</li>");
             }
 
-            writer.println("</div>");
-            writer.println("</div>");
+            writer.println("</ul>");
             writer.println("</body>");
             writer.println("</html>");
         } catch (IOException e) {
