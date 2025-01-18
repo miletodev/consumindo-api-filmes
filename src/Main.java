@@ -9,10 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -53,32 +50,26 @@ public class Main {
 
         List<String> titles = parseTitles(moviesArray);
         titles.forEach(System.out::println);
-
         List<String> urlImages = parseUrlImages(moviesArray);
         urlImages.forEach(System.out::println);
-
         List<Integer> years = parseYears(moviesArray);
         years.forEach(System.out::println);
-
         List<Double> ratings = parseRatings(moviesArray);
         ratings.forEach(System.out::println);
-
-        System.out.println(json);
     }
 
     private static String[] parseJsonMovies(String json) {
-        Matcher matcher = Pattern.compile(".*\\[(.*)\\].*").matcher(json);
+        // Atualiza regex para capturar "results" corretamente, permitindo múltiplas linhas
+        Matcher matcher = Pattern.compile("\"results\":\\[(.*)]", Pattern.DOTALL).matcher(json);
 
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("no match in " + json);
+        if (!matcher.find()) {
+            System.out.println("Erro: Não foi possível encontrar o campo 'results' no JSON.");
+            throw new IllegalArgumentException("Campo 'results' não encontrado no JSON.");
         }
 
-        String[] moviesArray = matcher.group(1).split("\\},\\{");
-        moviesArray[0] = moviesArray[0].substring(1);
-        int last = moviesArray.length - 1;
-        String lastString = moviesArray[last];
-        moviesArray[last] = lastString.substring(0, lastString.length() - 1);
-        return moviesArray;
+        String moviesJsonArray = matcher.group(1).trim();
+        // Divide objetos JSON dentro do array, usando delimitadores precisos
+        return moviesJsonArray.split("(?<=\\}),\\s*(?=\\{)");
     }
 
     private static List<String> parseTitles(String[] moviesArray) {
@@ -91,16 +82,18 @@ public class Main {
 
     private static List<Integer> parseYears(String[] moviesArray) {
         return parseAttribute(moviesArray, "release_date").stream()
+                .filter(date -> !date.isEmpty())
                 .map(date -> Integer.parseInt(date.split("-")[0]))
                 .collect(Collectors.toList());
     }
 
     private static List<Double> parseRatings(String[] moviesArray) {
-    return parseAttribute(moviesArray, "vote_average", false).stream()
-            .map(Double::parseDouble)
-            .map(value -> BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue())
-            .collect(Collectors.toList());
-}
+        return parseAttribute(moviesArray, "vote_average", false).stream()
+                .filter(value -> !value.isEmpty())
+                .map(Double::parseDouble)
+                .map(value -> BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue())
+                .collect(Collectors.toList());
+    }
 
     private static List<String> parseAttribute(String[] moviesArray, String attribute) {
         return parseAttribute(moviesArray, attribute, true);
@@ -116,7 +109,7 @@ public class Main {
             if (matcher.find()) {
                 attributes.add(matcher.group(1));
             } else {
-                attributes.add(""); // Add empty string if attribute is not found
+                attributes.add(""); // Adiciona string vazia caso o atributo não seja encontrado
             }
         }
         return attributes;
