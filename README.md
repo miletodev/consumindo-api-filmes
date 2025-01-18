@@ -59,6 +59,39 @@ Cinema Paradiso (1988) - 8.4/10
 4. Faça push para a branch (`git push origin feature/nova-feature`).
 5. Abra um Pull Request.
 
+## Estrutura do Objeto Movie (#7DaysOfCode - Dia 3)
+
+Este texto aborda as decisões sobre a estrutura do objeto Movie no contexto do desafio #7DaysOfCode.
+
+### Setters e Construtor Padrão:
+
+O uso de record em Java torna o objeto Movie automaticamente imutável. Essa imutabilidade é crucial porque:
+
+- Garante a integridade dos dados do filme, evitando alterações acidentais após a criação.
+- Alinha-se com a natureza de entidades de domínio simples como "Filme", cujos atributos são geralmente fixos.
+- Simplifica a manutenção e previne bugs relacionados a mudanças de estado inesperadas.
+
+Portanto, a inclusão de setters é desnecessária, pois o estado do filme é definido na criação e não deve ser modificado posteriormente.
+
+### Interfaceamento
+
+O record já oferece uma estrutura concisa e suficiente para encapsular os dados de um filme. Interfaces seriam relevantes para definir comportamentos comuns entre diferentes tipos de objetos relacionados (ex: Movie e Series). No entanto, como Movie é uma entidade simples, a adição de uma interface não se justifica pela ausência de métodos adicionais.
+
+### Imutabilidade:
+
+A imutabilidade do objeto Movie é essencial pelos seguintes motivos:
+
+- Integridade dos dados: Previne alterações acidentais após a criação.
+- Consistência com o domínio: Reflete a natureza estática dos atributos de um filme.
+- Facilidade de manutenção e prevenção de bugs: Evita erros decorrentes de mudanças de estado imprevistas.
+- Compatibilidade com programação funcional: Facilita o uso com APIs como streams e coleções imutáveis.
+- Segurança em threads: Permite o compartilhamento seguro entre threads, eliminando a necessidade de sincronização.
+- Simplicidade da API: Dispensa métodos de acesso e modificação.
+- Previsibilidade e confiabilidade: Torna o código mais fácil de entender e depurar.
+- Integração com práticas modernas: Alinha-se com as melhores práticas de desenvolvimento.
+
+Em resumo: O uso de record garante a imutabilidade do objeto Movie, o que traz diversos benefícios em termos de segurança, manutenibilidade e alinhamento com boas práticas de programação. A imutabilidade dispensa a necessidade de setters e, dada a simplicidade da entidade, o uso de interfaces não se justifica.
+
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
