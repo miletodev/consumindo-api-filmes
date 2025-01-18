@@ -37,6 +37,7 @@ public class Main {
                 .collect(Collectors.toList()); // Limita a lista a 250 filmes
 
         HtmlGenerator.generateHtml(allMovies, "filmes.html"); // Gera um arquivo HTML com a lista de filmes
+        System.out.println("Arquivo gerado com sucesso! Top: " + allMovies.size() + " filmes."); // Mensagem de sucesso
     }
 
     private static Map<String, String> loadEnv() {

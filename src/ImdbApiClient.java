@@ -7,9 +7,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ImdbApiClient {
     private final String apiKey;
@@ -33,11 +36,24 @@ public class ImdbApiClient {
             List<Movie> movies = parseMovies(json);
             allMovies.addAll(movies);
 
+            // Filtra filmes duplicados e mantém apenas o mais antigo
+            allMovies = new ArrayList<>(allMovies.stream()
+                    .filter(movie -> movie.title() != null && !movie.title().isEmpty())
+                    .collect(Collectors.toMap(
+                            Movie::title,
+                            Function.identity(),
+                            (movie1, movie2) -> movie1.year() < movie2.year() ? movie1 : movie2
+                    ))
+                    .values());
+
             if (allMovies.size() >= 250) {
                 break;
             }
         }
-        return allMovies;
+        return allMovies.stream()
+                .sorted(Comparator.comparingDouble(Movie::rating).reversed())
+                .limit(250)
+                .collect(Collectors.toList());
     }
 
     private static String[] parseJsonMovies(String json) {
