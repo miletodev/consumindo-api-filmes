@@ -130,6 +130,10 @@ O projeto é estruturado para garantir clareza, manutenibilidade e integração 
 
 Essa estrutura garante que o projeto seja fácil de entender, manter e estender, enquanto adere às práticas modernas de desenvolvimento em Java.
 
+## Resultado
+
+![Resultado](src/images/htmlGenerated.png)
+
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT. Veja o arquivo `LICENSE` para mais detalhes.

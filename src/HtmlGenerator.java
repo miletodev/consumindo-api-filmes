@@ -39,7 +39,7 @@ public class HtmlGenerator {
 
         String divTemplate =
                 """
-                <div class="col-md-4 d-flex align-items-stretch">
+                <div class="col-md-4 col-sm-6 col-12 d-flex align-items-stretch">
                     <div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
                         <h4 class="card-header">%s</h4>
                         <div class="card-body">
