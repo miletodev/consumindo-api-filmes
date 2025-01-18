@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -8,13 +9,11 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
 /**
@@ -39,15 +38,18 @@ public static void main() throws URISyntaxException, IOException, InterruptedExc
 
     String search = "top_rated";
     int pagina = 1;
+    int total_paginas = 496; // Número total de páginas disponíveis na API
+    List<Movie> allMovies = new ArrayList<>();
 
-    HttpClient client = HttpClient.newHttpClient();
-    HttpRequest request = HttpRequest.newBuilder()
-            .uri(new URI("https://api.themoviedb.org/3/movie/" + search + "?api_key=" + key + "&language=pt-BR&page=" + pagina))
-            .GET()
-            .build();
+    for (pagina = 1; pagina <= total_paginas; pagina++) {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI("https://api.themoviedb.org/3/movie/" + search + "?api_key=" + key + "&language=pt-BR&page=" + pagina))
+                .GET()
+                .build();
 
-    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-    String json = response.body(); // JSON retornado pela API
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String json = response.body(); // JSON retornado pela API
 
         List<Movie> movies = parseMovies(json);// Faz o parse do JSON e retorna uma lista de filmes
         allMovies.addAll(movies); // Adiciona os filmes à lista de filmes
@@ -168,14 +170,68 @@ private static Map<String, String> loadEnv() {
 /**
  * Classe que representa um filme. Ela é usada para armazenar os atributos de um filme.
  * A classe é imutável e possui um método toString que retorna uma representação textual do filme.
+ * Também possui um método getFullImageUrl que retorna a URL completa da imagem do filme.
+ *
  * @param title Título do filme
  * @param urlImage URL da imagem do filme
  * @param year Ano de lançamento do filme
  * @param rating Avaliação do filme
+ * @return Filme
  */
 public record Movie(String title, String urlImage, int year, double rating) {
+    public String getFullImageUrl() {
+        return "https://image.tmdb.org/t/p/w500" + urlImage;
+    }
+
     @Override
-    public String toString() { // Retorna uma representação textual do filme
-        return title + " (" + year + ") - " + rating + "/10"; // Formato: "Título (Ano) - Avaliação/10"
+    public String toString() {
+        return title + " (" + year + ") - " + rating + "/10";
+    }
+}
+
+public class HtmlGenerator {
+    public static void generateHtml(List<Movie> movies, String filePath) {
+        String head = """
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+                integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        </head>
+        """;
+
+        String divTemplate = """
+        <div class="col-md-4 d-flex align-items-stretch mb-3">
+            <div class="card text-white bg-dark">
+                <h4 class="card-header">%s</h4>
+                <div class="card-body">
+                    <img class="card-img" src="%s" alt="%s">
+                    <p class="card-text mt-2">Nota: %s - Ano: %s</p>
+                </div>
+            </div>
+        </div>
+        """;
+
+        try (PrintWriter writer = new PrintWriter(filePath, "UTF-8")) {
+            writer.println("<!DOCTYPE html>");
+            writer.println("<html>");
+            writer.println(head);
+            writer.println("<body>");
+            writer.println("<div class=\"container\">");
+            writer.println("<h1>Filmes</h1>");
+            writer.println("<div class=\"row justify-content-center\">");
+
+            for (Movie movie : movies) {
+                writer.println(String.format(divTemplate, movie.title(), movie.getFullImageUrl(), movie.title(), movie.rating(), movie.year()));
+            }
+
+            writer.println("</div>");
+            writer.println("</div>");
+            writer.println("</body>");
+            writer.println("</html>");
+        } catch (IOException e) {
+            Logger logger = Logger.getLogger(com.sun.tools.javac.Main.class.getName());
+            logger.log(Level.SEVERE, "Erro ao gerar HTML", e);
+        }
     }
 }
