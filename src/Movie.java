@@ -5,6 +5,7 @@
  */
 
 public record Movie(String title, String urlImage, double rating, int year) implements Content {
+    // Atributos da classe
     @Override
     public String title() {
         return title;

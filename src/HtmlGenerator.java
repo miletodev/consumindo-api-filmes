@@ -4,8 +4,16 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * A classe HtmlGenerator é responsável por gerar um arquivo HTML com a lista de filmes.
+ * Ela possui um método estático generateHtml que recebe uma lista de filmes e um caminho para o arquivo HTML.
+ * O método gera um arquivo HTML com os filmes passados e os salva no caminho especificado.
+ * Caso ocorra um erro ao gerar o arquivo, é registrado um log de erro.
+ * @see Movie
+ */
 public class HtmlGenerator {
     public static void generateHtml(List<Movie> movies, String filePath) {
+        // HTML head
         String head =
                 """
                 <head>
@@ -19,7 +27,15 @@ public class HtmlGenerator {
                         }
                     </style>
                 </head>
-                """; // HTML head
+                """;
+
+        /**
+         * Template para a div que contém as informações de um filme.
+         * O template contém placeholders para o título, a URL da imagem, a nota, e o ano do filme.
+         * Os valores dos placeholders são substituídos pelos valores dos atributos do filme.
+         *
+         * Disponibilizado pelo Paulo Silveira (https://www.linkedin.com/in/paulosilveira/)
+         */
 
         String divTemplate =
                 """
@@ -33,6 +49,8 @@ public class HtmlGenerator {
                     </div>
                 </div>
                 """; // Movie card template
+
+        // Escreve o conteúdo no arquivo HTML
 
         try (PrintWriter writer = new PrintWriter(filePath)) {
             writer.println("<!DOCTYPE html>");
